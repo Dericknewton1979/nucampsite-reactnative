@@ -35,15 +35,12 @@ const ReservationScreen = () => {
       [
         {
           text: "Cancel",
-          onPress: () => console.log("Reservation Search Canceled"),
+          onPress: () => resetForm(),
           style: "cancel",
         },
         {
           text: "OK",
-          onPress: () => {
-            console.log("Starting Reservation Search...");
-            resetForm();
-          },
+          onPress: () => resetForm(),
         },
       ],
       { cancelable: false }
