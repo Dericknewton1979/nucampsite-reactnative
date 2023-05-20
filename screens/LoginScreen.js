@@ -307,13 +307,13 @@
 // export default LoginScreen;
 import { useEffect, useState } from "react";
 import { View, StyleSheet, ScrollView, Image } from "react-native";
-import { CheckBox, Input, Button, Icon } from "react-native-elements";
+import { CheckBox, Input, Icon, Button } from "react-native-elements";
 import * as SecureStore from "expo-secure-store";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 import { baseUrl } from "../shared/baseUrl";
 import logo from "../assets/images/logo.png";
-import { ImageManipulator } from "expo-image-manipulator";
 
 const LoginTab = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -321,9 +321,10 @@ const LoginTab = ({ navigation }) => {
   const [remember, setRemember] = useState(false);
 
   const handleLogin = () => {
-    console.log("username:", username);
-    console.log("password:", password);
-    console.log("remember:", remember);
+    console.log("username: ", username);
+    console.log("password: ", password);
+    console.log("remember: ", remember);
+
     if (remember) {
       SecureStore.setItemAsync(
         "userinfo",
@@ -331,10 +332,10 @@ const LoginTab = ({ navigation }) => {
           username,
           password,
         })
-      ).catch((error) => console.log("Could not save user info", error));
+      ).catch((error) => console.log("Could not save user info:", error));
     } else {
       SecureStore.deleteItemAsync("userinfo").catch((error) =>
-        console.log("Could not delete user info", error)
+        console.log("Could not delete user info:", error)
       );
     }
   };
@@ -426,10 +427,10 @@ const RegisterTab = () => {
       password,
       firstName,
       lastName,
-      email,
       remember,
     };
     console.log(JSON.stringify(userInfo));
+
     if (remember) {
       SecureStore.setItemAsync(
         "userinfo",
@@ -437,10 +438,10 @@ const RegisterTab = () => {
           username,
           password,
         })
-      ).catch((error) => console.log("Could not save user info", error));
+      ).catch((error) => console.log("Could not save user info:", error));
     } else {
       SecureStore.deleteItemAsync("userinfo").catch((error) =>
-        console.log("Could not delete user info", error)
+        console.log("Could not delete user info:", error)
       );
     }
   };
@@ -453,25 +454,37 @@ const RegisterTab = () => {
         allowsEditing: true,
         aspect: [1, 1],
       });
-      if (!capturedImage.cancelled) {
-        console.log(capturedImage);
+      if (capturedImage.assets) {
+        console.log(capturedImage.assets[0]);
         processImage(capturedImage.assets[0].uri);
       }
     }
   };
-  const processImage = async (imgUri) => {
-    try {
-      const processedImage = await ImageManipulator.manipulateAsync(
-        imgUri,
-        [{ resize: { width: 400, height: 400 } }],
-        { format: "png" }
-      );
 
-      console.log(processedImage);
-      setImageUrl(processedImage.uri);
-    } catch (error) {
-      console.log("Image processing failed", error);
+  const getImageFromGallery = async () => {
+    const mediaLibraryPermission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (mediaLibraryPermission.status === "granted") {
+      const capturedImage = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+      if (capturedImage.assets) {
+        console.log(capturedImage.assets[0]);
+        processImage(capturedImage.assets[0].uri);
+      }
     }
+  };
+
+  const processImage = async (imgUri) => {
+    const processedImage = await ImageManipulator.manipulateAsync(
+      imgUri,
+      [{ resize: { width: 400 } }],
+      { format: "png" }
+    );
+    console.log(processedImage);
+    setImageUrl(processedImage.uri);
   };
 
   return (
@@ -484,6 +497,7 @@ const RegisterTab = () => {
             style={styles.image}
           />
           <Button title="Camera" onPress={getImageFromCamera} />
+          <Button title="Gallery" onPress={getImageFromGallery} />
         </View>
         <Input
           placeholder="Username"
@@ -511,7 +525,7 @@ const RegisterTab = () => {
         />
         <Input
           placeholder="Last Name"
-          leftIcon={{ type: "font-awesome", name: "user-o" }}
+          leftIcon={{ type: "font-awesome", name: "user" }}
           onChangeText={(text) => setLastName(text)}
           value={lastName}
           containerStyle={styles.formInput}
